@@ -1,5 +1,8 @@
-// Novacoin_block_parser.cpp : Defines the entry point for the console application.
-//
+/*
+Notes on datastructures used:
+1 Use uint32_t instead of unsigned int because unsigned int is not 32 bytes for all architecture.
+  uint32_t is a macro and always is a 32 bits unsigned integer. 
+*/
 
 #include "stdafx.h"
 #include <iostream>
@@ -35,9 +38,9 @@ int main()
 		exit(-100);
 	}
 	uint32_t beg = 0,bfsize=0;
-	beg = block.tellg();
-	block.seekg(0,block.end);
-	bfsize = uint32_t(block.tellg() ) -  beg ;
+	beg = block.tellg();  //position begining of block header. can hardcode value 8, but this seems cleaner
+	block.seekg(0,block.end);  //end of file to calculate size
+	bfsize = uint32_t(block.tellg() ) -  beg ; //size in field is sizeof_file - 8bytes(4 bytes magic, 4 bytes size)
 #ifdef _DEBUG
 	cout <<"File Size Calculated:"<< bfsize<<endl;
 #endif
@@ -46,7 +49,19 @@ int main()
 		cout << "Incorrect Size in header" << endl;
 		exit(-101);
 	}
-	block.seekg(beg);
+	//checking for integer overflow of size
+	block.clear();
+	block.seekg(bfsize+beg,block.beg);   
+	cout << block.tellg() << endl;
+	uint32_t detect=0;
+	block.read(reinterpret_cast<char *>(&detect),sizeof(detect));
+	if (!block.eof())
+	{
+		cout << "integer overflow by Block Size detected";
+	}
 
+	//reset stream pointer to beginning of block header
+	block.clear();
+	block.seekg(beg,block.beg);
 }
 
