@@ -1,0 +1,5 @@
+/Novacoin_block_parser/ipch/
+*.db
+*.log
+/Novacoin_block_parser/Debug/
+
