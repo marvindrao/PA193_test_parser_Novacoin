@@ -2,4 +2,7 @@
 *.db
 *.log
 /Novacoin_block_parser/Debug/
+/Novacoin_block_parser/Release/
+/Novacoin_block_parser/.vs/
+
 
