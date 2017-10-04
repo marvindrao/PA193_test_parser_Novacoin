@@ -16,7 +16,11 @@ int main()
 {
 	ifstream block;
 	cout << "NovaCoin Block Parser"<<endl;
+<<<<<<< HEAD
 	block.open("block2", ios::binary);
+=======
+	block.open("block", ios::binary);
+>>>>>>> fba4eaff7411075d6cf05c5f88b0db5b6aa3f247
 	if (!block.is_open())
 	{
 		cout << "file not open" << endl;
