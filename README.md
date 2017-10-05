@@ -1,7 +1,6 @@
 # PA193_test_parser_Novacoin
 A block parser for Novacoin for PA193 Autumn 2017 course
-![travis_status](https://travis-ci.org/arvindrao7589/PA193_test_parser_Novacoin.svg?branch=mastera)
-
+[![Build Status](https://travis-ci.org/arvindrao7589/PA193_test_parser_Novacoin.svg?branch=master)](https://travis-ci.org/arvindrao7589/PA193_test_parser_Novacoin)
 
 Development Strategy:
 
