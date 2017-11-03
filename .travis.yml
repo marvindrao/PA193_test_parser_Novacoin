@@ -3,6 +3,6 @@ language: cpp
 compiler: g++
 
 before_script: 
- cd Novacoin_block_parser/Novacoin_block_parser; sudo apt-get install libssl-*
+ cd Novacoin_block_parser/Novacoin_block_parser
 
 script: "bash build.sh"
