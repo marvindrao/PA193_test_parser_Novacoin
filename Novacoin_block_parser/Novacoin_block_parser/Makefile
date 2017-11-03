@@ -1,5 +1,5 @@
 all:
-	$(CXX) -Wall -Wextra -D _DEBUG Novacoin_block_parser.cpp -o parser
+	$(CXX) -g -Wall -Wextra -D _DEBUG -lcrypto Novacoin_block_parser.cpp -o parser
 
 test:
 	./parser
