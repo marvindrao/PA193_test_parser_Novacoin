@@ -9,7 +9,7 @@ struct transaction_in{
     uint32_t nSequence;
 } ;
 
-struct transaction_out{
+struct transaction_out {
     uint64_t value; 
     uint64_t scriptPubKeyLength; 
     unsigned char *scriptPubKey;
