@@ -5,6 +5,7 @@ Notes on datastructures used:
 */
 
 //#include "stdafx.h"
+#include "block.h"
 #include <iostream>
 #include <fstream>
 #include <stdint.h>
@@ -23,16 +24,29 @@ Notes on datastructures used:
 #define SCRYPT_BUFFER_SIZE (131072 + 63)
 unsigned char* scrypt_blockhash(const uint8_t* input);
 #endif
+
 using namespace std;
-bool check_preheader(istream& block);
-bool check_header(istream& block);
+struct transaction;
+struct block_header;
+struct transaction_out;
+struct transaction_in;
+
+bool check_preheader(istream& block,struct block_header *b);
+bool check_header(istream& block,struct block_header *b);
 uint64_t varint(istream& block);
-bool get_transactions(ifstream& block);
-bool get_ip_txn(ifstream& block);
-bool get_op_txn(ifstream& block);
+bool get_transactions(ifstream& block,struct transaction *t);
+bool get_ip_txn(ifstream& block,struct transaction_in *in);
+bool get_op_txn(ifstream& block,struct transaction_out *out);
+void print_hash(unsigned char* hash, int i);
+void print_block(struct block_header *b);
+void print_transaction(struct transaction *t);
+void print_transaction_in(struct transaction_in *in);
+void print_transaction_out(struct transaction_out *out);
 int main(int argv, char **argc)
 {
 	ifstream block;
+	struct block_header b;
+	struct transaction *t;
 	if(argv==2)
 	{
 			block.open(argc[1], ios::binary);
@@ -47,21 +61,88 @@ int main(int argv, char **argc)
 		cout << "file not open" << endl;
 		return -99;
 	}
-	if(!check_preheader(block))
+	if(!check_preheader(block,&b))
 		return -99;
-	if(!check_header(block))
+	if(!check_header(block,&b))
 		return -99;
-	uint64_t n_t;
-	n_t=varint(block);
-	cout<<"Number of Transactions "<<n_t<<endl;
-	cout<<"-------------------------------------------------------"<<endl;
-	for(uint64_t i = 0;i<n_t;i++)
+	cout<<endl;
+	b.n_t=varint(block);
+	t=(struct transaction *)malloc(b.n_t*sizeof(struct transaction));
+	for(uint64_t i = 0;i<b.n_t;i++)
 	{
-		cout<<"transaction "<<i+1<<endl;
-		get_transactions(block);
+		get_transactions(block,&t[i]);
+	}
+	b.tx=t;
+	print_block(&b);
+}
+void print_hash(unsigned char* hash, int len)
+{
+	for(unsigned int i=0; i<len; ++i)
+		cout <<setw(2)<<hex<<setfill('0')<<(int)hash[i];
+}
+void print_block(struct block_header *b)
+{
+	cout<<"nVersion "<<b->nVersion<<endl;
+	cout<<"nBits "<<b->nBits<<endl;
+	cout<<"nNonce "<<b->nNonce<<endl;
+	time_t tx_time=b->nTime;
+	cout<<"nTime "<<ctime(&tx_time);
+	cout<<"Number of Transactions "<<b->n_t<<endl;
+	cout<<"PrevHash: ";
+	print_hash(b->hashPrevBlock,32);
+	cout<<endl;
+	cout<<"MerkleRoot: ";
+	print_hash(b->hashMerkleRoot,32);
+	cout<<endl;
+	cout<<"Block Hash: ";
+	print_hash(b->b_hash,32);
+	cout<<endl;
+	cout<<"BlockSize "<<dec<<b->block_size<<endl;
+	for(int i=0;i<b->n_t;i++)
+	{
+		cout<<"Transaction "<<i+1 << endl;
+		print_transaction(&b->tx[i]);
+	}
+
+}
+void print_transaction(struct transaction *t)
+{
+	cout<<"Version "<<t->version<<endl;
+	time_t tx_time=t->timestamp;
+	cout<<"Transaction Time "<<ctime(&tx_time);
+	cout<<"Number of inputs "<<dec<<t->ip_n<<endl;
+	cout<<"Number of outputs "<<t->op_n<<endl;
+	//tx_time=t->lock_time;
+	///cout<<"Transaction Lock Time/Height "<<dec<<t->lock_time<<endl;
+	cout<<"Transaction Length "<<t->len<<endl;
+	cout<<"Transaction Hash :";
+	print_hash(t->tid,32);
+	cout<<endl;
+	for(int i=0;i<t->ip_n;i++)
+	{
+		cout<<"Input "<<dec<<i+1<<endl;
+		print_transaction_in(&t->tx_input[i]);
+	}
+	for(int i=0;i<t->op_n;i++)
+	{
+		cout<<"Output "<<dec<<i+1<<endl;
+		print_transaction_out(&t->tx_output[i]);
 	}
 }
-bool check_preheader(istream& block)
+void print_transaction_in(struct transaction_in *in)
+{
+	cout<<"Referred TxId :";
+	print_hash(in->txid,32);
+	cout<<endl;
+	cout<<"Referred output in TxId :"<<dec<<in->n<<endl;
+
+}
+void print_transaction_out(struct transaction_out *out)
+{
+	cout<<"Value :"<<float(out->value/1000000.0)<<endl;
+	
+}
+bool check_preheader(istream& block,struct block_header *b)
 {
 	uint32_t magic= 0;
 	uint32_t bsize = 0;
@@ -102,17 +183,18 @@ bool check_preheader(istream& block)
 	/*for(unsigned int i=0; i<bfsize; ++i)
 		cout <<std::setw(2)<<hex<<setfill('0')<<(int) input[i];*/
 	hash = scrypt_blockhash(input);
-	cout<<"hash calculated"<<endl;
 	for(unsigned int i=0; i<32; ++i)
-		cout <<std::setw(2)<<hex<<setfill('0')<<(int) hash[31-i];
-	
-	cout<<endl<<"----preheader complete----"<<endl;
+	{
+		//cout <<std::setw(2)<<hex<<setfill('0')<<(int) hash[31-i];
+		b->b_hash[i]=hash[31-i];
+	}
+	b->block_size = bfsize;
 	block.clear();
 	block.seekg(beg,block.beg);
 	return true;
 }
 
-bool check_header(istream& block)
+bool check_header(istream& block,struct block_header *b)
 {
 	uint32_t nVersion;
 	unsigned char hashPrevBlock[32];
@@ -127,12 +209,15 @@ bool check_header(istream& block)
 	block.read(reinterpret_cast<char *>(&nTime), sizeof(nTime));
     block.read(reinterpret_cast<char *>(&nBits), sizeof(nBits));
 	block.read(reinterpret_cast<char *>(&nNonce), sizeof(nNonce));
+	
+	b->nVersion=nVersion;
+	b->nTime=nTime;
+	b->nBits=nBits;
+	b->nNonce=nNonce;
 	for(unsigned int i=0; i<32; ++i)
-		cout <<std::setw(2)<<hex<<setfill('0')<<(int) hashPrevBlock[31-i];
-	cout<<endl;
+		b->hashPrevBlock[i] = hashPrevBlock[31-i];
 	for(unsigned int i=0; i<32; ++i)
-		cout <<std::setw(2)<<hex<<setfill('0')<<(int) hashMerkleRoot[31-i];
-	cout<<endl;
+		b->hashMerkleRoot[i]= hashMerkleRoot[31-i];
 	return true;
 	
 }
@@ -168,40 +253,34 @@ uint64_t varint(istream& block)
 }
 
 
-bool get_transactions(ifstream& block)
+bool get_transactions(ifstream& block,struct transaction *t)
 {
 	
 	uint32_t version;
 	uint32_t timestamp,lock_time;
 	uint64_t ip_n,op_n;
+	struct transaction_in *in;
+	struct transaction_out *out;
 	int tx_start = block.tellg();
 	block.read(reinterpret_cast<char *>(&version), sizeof(version));
 	block.read(reinterpret_cast<char *>(&timestamp), sizeof(timestamp));
-	
 	ip_n=varint(block);
-	cout<<"Version "<<version<<endl;
-	cout<<"time "<<dec<<timestamp<<endl;
-	time_t tx_time=timestamp;
-	cout<<"TX_TIME "<<ctime(&tx_time)<<endl;
-	cout<<"Number of inputs "<<ip_n<<endl;
+	in=(struct transaction_in *)malloc(ip_n*sizeof(struct transaction_in));
 	for(uint64_t i =0;i<ip_n;i++)
 	{
-		//cout<<"input "<<i+1<<endl;
-		get_ip_txn(block);
+		get_ip_txn(block,&in[i]);
 	}
 	op_n=varint(block);
-	cout<<"Number of outputs "<<op_n<<endl;
+	out=(struct transaction_out *)malloc(op_n*sizeof(struct transaction_out));
+	
 	for(uint64_t i =0;i<op_n;i++)
 	{
-		//cout<<"output "<<i+1<<endl;
-		get_op_txn(block);
+		get_op_txn(block,&out[i]);
 	}
 	
     block.read(reinterpret_cast<char *>(&lock_time), sizeof(lock_time));
-	cout<<"LockTime "<<lock_time << endl;
 	int tx_end =block.tellg();
 	unsigned int tx_size=tx_end - tx_start;
-	cout<<"Transaction size "<<dec<<tx_size << endl;
 	block.seekg(tx_start,block.beg);
 	unsigned char* tx;
 	unsigned char* tx_hash1,*tx_hash2,*tx_hash;
@@ -212,12 +291,19 @@ bool get_transactions(ifstream& block)
 	block.read(reinterpret_cast<char *>(&tx[0]), tx_size*sizeof(unsigned char));
 	SHA256(tx, tx_size,tx_hash1);
 	SHA256(tx_hash1, 32,tx_hash2);
+	t->version=version;
+	t->timestamp=timestamp;
+	t->lock_time=lock_time;
+	t->len=tx_size;
+	t->ip_n=ip_n;
+	t->op_n=op_n;
+	t->tx_input=in;
+	t->tx_output=out;
 	for(unsigned int i=0; i<32; ++i)
-		cout <<std::setw(2)<<hex<<setfill('0')<<(int) tx_hash2[31-i];
-	cout<<endl<<"--------------------------------------------"<<endl;
+		t->tid[i] = tx_hash2[31-i];
 }
 
-bool get_ip_txn(ifstream& block)
+bool get_ip_txn(ifstream& block,struct transaction_in *in)
 {
 	unsigned char txid[32];
 	unsigned char *scriptSig;
@@ -229,18 +315,14 @@ bool get_ip_txn(ifstream& block)
 	scriptSig =(unsigned char*)malloc(scriptSigLength*sizeof(unsigned char));
 	block.read(reinterpret_cast<char *>(&scriptSig[0]), scriptSigLength*sizeof(unsigned char));
 	block.read(reinterpret_cast<char *>(&nsequence), sizeof(nsequence));
-	
-	//cout<< "n "<<n<<endl;
-	//cout<< "scriptSigLength "<<scriptSigLength<<endl;
-	//cout<< "nsequence "<<nsequence<<endl;
-	/*for(unsigned int i=0; i<32; ++i)
-		cout <<std::setw(2)<<hex<<setfill('0')<<(int) txid[31-i];
-	cout<<endl;
-	for(uint64_t i=0; i<scriptSigLength; ++i)
-		cout <<std::setw(2)<<hex<<setfill('0')<<(int) scriptSig[i];
-	cout<<endl;*/
+	in->n =n;
+	in->scriptSigLength =scriptSigLength;
+	in->nSequence=nsequence;
+	in->scriptSig=scriptSig;
+	for(int i=0;i<32;i++)
+		in->txid[i]=txid[31-i];
 }
-bool get_op_txn(ifstream& block)
+bool get_op_txn(ifstream& block,struct transaction_out *out)
 {
 	unsigned char *scriptPubKey;
 	uint64_t nValue;
@@ -249,11 +331,10 @@ bool get_op_txn(ifstream& block)
 	scriptPubKeyLength=varint(block);
 	scriptPubKey =(unsigned char*)malloc(scriptPubKeyLength*sizeof(unsigned char));
 	block.read(reinterpret_cast<char *>(&scriptPubKey[0]), scriptPubKeyLength*sizeof(unsigned char));
-	cout<<"value of transaction "<<(float)((nValue*1.0)/1000000)<<endl;
-	/*for(uint64_t i=0; i<scriptPubKeyLength; ++i)
-		cout <<std::setw(2)<<hex<<setfill('0')<<(int) scriptPubKey[i];
-	cout<<endl;*/
-	
+	//cout<<"value of transaction "<<(float)((nValue*1.0)/1000000)<<endl;
+	out->value=nValue;
+	out->scriptPubKeyLength=scriptPubKeyLength;
+	out->scriptPubKey=scriptPubKey;
 }
 static inline void xor_salsa8(uint32_t B[16], const uint32_t Bx[16])
 {
