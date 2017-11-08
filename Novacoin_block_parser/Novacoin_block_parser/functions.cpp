@@ -142,7 +142,7 @@ void print_block(struct block_header *b)
 	print_hash(b->b_hash,32);
 	cout<<endl;
 	cout<<"BlockSize "<<dec<<b->block_size<<endl;
-	for(int i=0;i<b->n_t;i++)
+	for(uint64_t i=0;i<b->n_t;i++)
 	{
 		cout<<"Transaction "<<i+1 << endl;
 		print_transaction(&b->tx[i]);
@@ -206,12 +206,12 @@ void compute_merkle_root(struct block_header *b, unsigned char *merkle_root)
 	n_t = ((b->n_t%2==0)?b->n_t:(b->n_t+1));
 	
 	unsigned char **tids= (unsigned char**) malloc(n_t*sizeof(unsigned char*));
-	for (int i = 0; i < n_t; i++ )
+	for (uint64_t i = 0; i < n_t; i++ )
 	{
     tids[i] = (unsigned char*) malloc(32*sizeof(char));
 	}
 	
-	for(int i=0; i <b->n_t;i++)
+	for(uint64_t i=0; i <b->n_t;i++)
 	{
 		memcpy(tids[i],b->tx[i].tid,32);
 	}
@@ -220,7 +220,7 @@ void compute_merkle_root(struct block_header *b, unsigned char *merkle_root)
 	while(lev!=1)
 	{
 		int j=0;
-		for(int i=0;i<lev;i=i+2)
+		for(uint64_t i=0;i<lev;i=i+2)
 		{
 			
 			unsigned char temp[64];
@@ -239,7 +239,7 @@ void compute_merkle_root(struct block_header *b, unsigned char *merkle_root)
 		lev=j;
 	}
 	memcpy(merkle_root,tids[0],32);
-	for (int i = 0; i < n_t; i++ )
+	for (uint64_t i = 0; i < n_t; i++ )
 	{
 		free(tids[i]);
 	}
@@ -364,10 +364,11 @@ uint64_t varint(istream& block)
 		return (uint64_t)s4;
 		
 	}
+	return 0;
 }
 
 
-bool get_transactions(ifstream& block,struct transaction *t)
+void get_transactions(ifstream& block,struct transaction *t)
 {
 	
 	uint32_t version;
@@ -413,10 +414,8 @@ bool get_transactions(ifstream& block,struct transaction *t)
 	memcpy(t->tid,tx_hash,32);
 	free(tx);
 	free(tx_hash);
-	
-}
-
-bool get_ip_txn(ifstream& block,struct transaction_in *in)
+	}
+void get_ip_txn(ifstream& block,struct transaction_in *in)
 {
 	unsigned char txid[32];
 	unsigned char *scriptSig;
@@ -435,7 +434,7 @@ bool get_ip_txn(ifstream& block,struct transaction_in *in)
 	for(int i=0;i<32;i++)
 		in->txid[i]=txid[31-i];
 }
-bool get_op_txn(ifstream& block,struct transaction_out *out)
+void get_op_txn(ifstream& block,struct transaction_out *out)
 {
 	unsigned char *scriptPubKey;
 	uint64_t nValue;

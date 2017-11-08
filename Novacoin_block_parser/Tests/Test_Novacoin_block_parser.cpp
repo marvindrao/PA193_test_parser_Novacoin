@@ -38,9 +38,12 @@ bool Test_check_preheader();
 
 //bool Test_check_header(istream& block,struct block_header *b);
 bool Test_check_header();
+
+bool Test_get_transactions(ifstream& block,struct transaction *t);
+
 /*
 //uint64_t varint(istream& block);
-bool Test_get_transactions(ifstream& block,struct transaction *t);
+
 bool Test_get_ip_txn(ifstream& block,struct transaction_in *in);
 bool Test_get_op_txn(ifstream& block,struct transaction_out *out);
 void Test_print_hash(unsigned char* hash, int i);
@@ -542,16 +545,53 @@ bool Test_check_header()
 }
 
 
-/*
-bool Test_get_transactions(ifstream& block,struct transaction *t)
+
+bool Test_get_transactions()
 {
+	struct transaction *tT;
+	uint32_t versionT;
+	uint32_t timestampT,lock_timeT;
+	uint64_t ip_nT,op_nT;
+	struct transaction_in *inT;
+	struct transaction_out *outT;
+		
+	unsigned char txid[32];
+	unsigned char *scriptSig;
+	uint32_t n,nsequence;
+	uint64_t scriptSigLength;
 	
-	uint32_t version;
-	uint32_t timestamp,lock_time;
-	uint64_t ip_n,op_n;
-	struct transaction_in *in;
-	struct transaction_out *out;
-	int tx_start = block.tellg();
+	uint64_t nValue;
+	uint64_t scriptPubKeyLength;
+	unsigned char *scriptPubKey;
+	
+	int tx_startT = block.tellg();
+	struct block_header test_b, test1_b;
+	ifstream test_block, test1_block;
+	bool txnStatus = true;
+	
+	cout << "*******************************************"<< endl;	
+	
+	cout << "Test2 : check_header: Started"<< endl;		
+	
+	test_block.open("block2",ios::binary);
+	test_block.seekg(88, ios::beg);
+	
+	if (!test_block.is_open())
+	{
+		cout << "Test Block 2 file not Found" << endl;
+		return false;
+	}
+	
+	test_b.n_t=varint(test_block);
+	tT=(struct transaction *)malloc(test_b.n_t*sizeof(struct transaction));
+	for(uint64_t i = 0;i<test_b.n_t;i++)
+	{
+		get_transactions(test_block,&tT[i]);
+	}
+	test_b.tx=tT;
+	
+	
+	
 	block.read(reinterpret_cast<char *>(&version), sizeof(version));
 	block.read(reinterpret_cast<char *>(&timestamp), sizeof(timestamp));
 	ip_n=varint(block);
@@ -592,7 +632,7 @@ bool Test_get_transactions(ifstream& block,struct transaction *t)
 	for(unsigned int i=0; i<32; ++i)
 		t->tid[i] = tx_hash2[31-i];
 }
-*/
+
 /*
 bool Test_get_ip_txn(ifstream& block,struct transaction_in *in)
 {
