@@ -42,4 +42,5 @@ struct block_header {
 	unsigned char header_signature[72];
     
 } ;
+
 #endif /* BLOCK_H */
