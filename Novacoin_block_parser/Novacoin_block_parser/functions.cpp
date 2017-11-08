@@ -121,7 +121,7 @@ void rev_hash(unsigned char* hash, int len)
 }
 void print_hash(unsigned char* hash, int len)
 {
-	for(unsigned int i=0; i<len; ++i)
+	for(int i=0; i<len; ++i)
 		cout <<setw(2)<<hex<<setfill('0')<<(int)hash[i];
 }
 void print_block(struct block_header *b)
