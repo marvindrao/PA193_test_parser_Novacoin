@@ -18,12 +18,12 @@
 void destroy_transaction_out(struct transaction_out *tout)
 {
 	free(tout->scriptPubKey);
-	free(tout);
+	//free(tout);
 }
 void destroy_transaction_in(struct transaction_in *tin)
 {
 	free(tin->scriptSig);
-	free(tin);
+	//free(tin);
 }
 void destroy_transaction(struct transaction *tx)
 {
@@ -39,7 +39,8 @@ void destroy_transaction(struct transaction *tx)
 	{
 		destroy_transaction_out(&tx->tx_output[i]);
 	}
-	free(tx);
+	free(tx->tx_input);
+	free(tx->tx_output);
 }
 void destroy_block(struct block_header *b)
 {
@@ -49,7 +50,7 @@ void destroy_block(struct block_header *b)
 	{
 		destroy_transaction(&b->tx[i]);
 	}
-	//free(b);
+	free(b->tx);
 }
 void verify_block(struct block_header *b,struct block_header *pb)
 {
@@ -67,7 +68,7 @@ void verify_block(struct block_header *b,struct block_header *pb)
 }
 void read_block(ifstream& block,struct block_header *b)
 {
-	struct transaction *t;
+	struct transaction *t=NULL;
 	check_preheader(block,b);
 	check_header(block,b);
 	cout<<endl;
