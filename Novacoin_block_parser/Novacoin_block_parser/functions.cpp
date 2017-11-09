@@ -326,7 +326,7 @@ bool check_preheader(istream& block,struct block_header *b)
 	if (magic != 0xe5e9e8e4)
 	{
 		cout << "Incorrect Magic in header" << endl;
-		exit(-1);
+		return false;
 	}
 	uint32_t beg = 0,bfsize=0;
 	beg = block.tellg();  //position begining of block header. can hardcode value 8, but this seems cleaner
@@ -338,7 +338,7 @@ bool check_preheader(istream& block,struct block_header *b)
 	if (bfsize != bsize)
 	{
 		cout << "Incorrect Size in header" << endl;
-		exit(-1);
+		return false;
 	}
 	block.clear();
 	block.seekg(beg,block.beg);

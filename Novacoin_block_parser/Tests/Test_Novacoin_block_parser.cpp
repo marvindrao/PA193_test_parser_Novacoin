@@ -5,8 +5,8 @@ Notes on datastructures used:
 */
 
 //#include "stdafx.h"
-#include "block.h"
-#include "Novacoin_block_parser_F.cpp"
+#include "../Novacoin_block_parser/block.h"
+#include "../Novacoin_block_parser/functions.h"
 /*
 #include <iostream>
 #include <fstream>
