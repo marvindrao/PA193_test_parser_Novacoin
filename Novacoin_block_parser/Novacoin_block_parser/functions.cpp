@@ -14,6 +14,35 @@
 #include "functions.h"
 #include <iomanip>
 
+bool verify_timestamp(uint32_t timestamp)
+{
+	const uint32_t tm = 60*60;
+	uint32_t currentTime = static_cast<uint32_t>(time(NULL));
+    return (timestamp-tm)<currentTime;
+}
+
+
+bool verify_transaction(transaction *tx)
+{
+	if(tx->ip_n==0 || tx->op_n == 0)
+		return false;
+	//if(verify_timestamp(tx->timestamp))
+		//return false;
+	return true;
+}
+bool isCoinbase(transaction *tx)
+{
+	if(tx->ip_n!=1)
+	{
+		return false;
+	}
+	unsigned char zero_hash[32];
+	memset(zero_hash,0,32);
+	if(memcmp(tx->tx_input->txid,zero_hash,32)!=0)
+		return false;
+	return true;
+}
+	
 
 void destroy_transaction_out(struct transaction_out *tout)
 {
@@ -52,7 +81,24 @@ void destroy_block(struct block_header *b)
 	}
 	free(b->tx);
 }
-void verify_block(struct block_header *b,struct block_header *pb)
+void verify_block(struct block_header *b)
+{
+	if(!isCoinbase(&b->tx[0]))
+		cout<<"First transaction of block is not coinbase"<<endl;
+	for(uint64_t i=1;i<b->n_t;i++)
+	{
+		if(isCoinbase(&b->tx[i]))
+			cout<<"Invalid Transaction. Transaction other than first coinbase"<<endl;
+	}
+	for(uint64_t i=0;i<b->n_t;i++)
+	{
+		if(!verify_transaction(&b->tx[i]))
+			cout<<"Invalid Transaction. Zero input/output encountered or timestamp not valid."<<endl;
+	}
+	//if(verify_timestamp(b->nTime))
+	//	cout<<"Invalid timestamp in blockheader"<<endl;
+}
+void verify_block_pair(struct block_header *b,struct block_header *pb) //this function verify block by compairing privious hash of block with previous hash
 {
 	if(!verify_merkle_root(b))
 	{
@@ -64,8 +110,12 @@ void verify_block(struct block_header *b,struct block_header *pb)
 	}
 	if(memcmp(b->hashPrevBlock,pb->b_hash,32)!=0)
 		cout<<"Previous block hash invalid"<<endl;
+	verify_block(b);
+	verify_block(pb);
+	
 	
 }
+//this function use to read block
 void read_block(ifstream& block,struct block_header *b)
 {
 	struct transaction *t=NULL;
@@ -80,7 +130,7 @@ void read_block(ifstream& block,struct block_header *b)
 	}
 	b->tx=t;
 	print_block(b);
-}
+}//this function use to check header of block
 bool check_header(istream& block,struct block_header *b)
 {
 	uint32_t nVersion;
@@ -119,11 +169,13 @@ void rev_hash(unsigned char* hash, int len)
 	memcpy(hash,tmp,len);
 	free(tmp);
 }
+//print hash of block
 void print_hash(unsigned char* hash, int len)
 {
 	for(int i=0; i<len; ++i)
 		cout <<setw(2)<<hex<<setfill('0')<<(int)hash[i];
 }
+//print all component of block like hash number of transaction....etc
 void print_block(struct block_header *b)
 {
 	cout<<"nVersion "<<b->nVersion<<endl;
@@ -142,13 +194,14 @@ void print_block(struct block_header *b)
 	print_hash(b->b_hash,32);
 	cout<<endl;
 	cout<<"BlockSize "<<dec<<b->block_size<<endl;
-	for(int i=0;i<b->n_t;i++)
+	for(uint64_t i=0;i<b->n_t;i++)
 	{
 		cout<<"Transaction "<<i+1 << endl;
 		print_transaction(&b->tx[i]);
 	}
 
 }
+//this function print Number of input and output Transaction in a block
 void print_transaction(struct transaction *t)
 {
 	cout<<"Version "<<t->version<<endl;
@@ -173,6 +226,7 @@ void print_transaction(struct transaction *t)
 		print_transaction_out(&t->tx_output[i]);
 	}*/
 }
+//
 void print_transaction_in(struct transaction_in *in)
 {
 	cout<<"Referred TxId :";
@@ -206,12 +260,12 @@ void compute_merkle_root(struct block_header *b, unsigned char *merkle_root)
 	n_t = ((b->n_t%2==0)?b->n_t:(b->n_t+1));
 	
 	unsigned char **tids= (unsigned char**) malloc(n_t*sizeof(unsigned char*));
-	for (int i = 0; i < n_t; i++ )
+	for (uint64_t i = 0; i < n_t; i++ )
 	{
     tids[i] = (unsigned char*) malloc(32*sizeof(char));
 	}
 	
-	for(int i=0; i <b->n_t;i++)
+	for(uint64_t i=0; i <b->n_t;i++)
 	{
 		memcpy(tids[i],b->tx[i].tid,32);
 	}
@@ -220,7 +274,7 @@ void compute_merkle_root(struct block_header *b, unsigned char *merkle_root)
 	while(lev!=1)
 	{
 		int j=0;
-		for(int i=0;i<lev;i=i+2)
+		for(uint64_t i=0;i<lev;i=i+2)
 		{
 			
 			unsigned char temp[64];
@@ -239,7 +293,7 @@ void compute_merkle_root(struct block_header *b, unsigned char *merkle_root)
 		lev=j;
 	}
 	memcpy(merkle_root,tids[0],32);
-	for (int i = 0; i < n_t; i++ )
+	for (uint64_t i = 0; i < n_t; i++ )
 	{
 		free(tids[i]);
 	}
@@ -254,6 +308,7 @@ bool verify_merkle_root(struct block_header *b)
 	return false;
 		
 }
+//header of previous block 
 bool check_preheader(istream& block,struct block_header *b)
 {
 	uint32_t magic= 0;
@@ -307,7 +362,7 @@ bool check_preheader(istream& block,struct block_header *b)
 	free(hash);
 	return true;
 }
-
+//this function read header parameter
 void get_header(istream& block,struct block_header *b)
 {
 	uint32_t nVersion;
@@ -364,10 +419,11 @@ uint64_t varint(istream& block)
 		return (uint64_t)s2;
 		
 	}
+	return 0;
 }
 
 
-bool get_transactions(ifstream& block,struct transaction *t)
+void get_transactions(ifstream& block,struct transaction *t)
 {
 	
 	uint32_t version;
@@ -398,8 +454,8 @@ bool get_transactions(ifstream& block,struct transaction *t)
 	block.seekg(tx_start,block.beg);
 	unsigned char *tx;
 	unsigned char *tx_hash;
-	tx_hash=(unsigned char*)malloc(32*sizeof(unsigned char));
-	tx = (unsigned char*)malloc(tx_size*sizeof(unsigned char));
+	tx_hash=(unsigned char*)malloc(32*sizeof(unsigned char));//allocate memory
+	tx = (unsigned char*)malloc(tx_size*sizeof(unsigned char));//allocate memory
 	block.read(reinterpret_cast<char *>(&tx[0]), tx_size*sizeof(unsigned char));
 	double_SHA256(tx,tx_size,tx_hash);
 	t->version=version;
@@ -413,10 +469,10 @@ bool get_transactions(ifstream& block,struct transaction *t)
 	memcpy(t->tid,tx_hash,32);
 	free(tx);
 	free(tx_hash);
+	}
 	
-}
-
-bool get_ip_txn(ifstream& block,struct transaction_in *in)
+//input transaction transaction parameter 	
+void get_ip_txn(ifstream& block,struct transaction_in *in)
 {
 	unsigned char txid[32];
 	unsigned char *scriptSig;
@@ -435,7 +491,8 @@ bool get_ip_txn(ifstream& block,struct transaction_in *in)
 	for(int i=0;i<32;i++)
 		in->txid[i]=txid[31-i];
 }
-bool get_op_txn(ifstream& block,struct transaction_out *out)
+//to read o/p transaction parameter
+void get_op_txn(ifstream& block,struct transaction_out *out)
 {
 	unsigned char *scriptPubKey;
 	uint64_t nValue;
