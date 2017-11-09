@@ -26,8 +26,8 @@ bool verify_transaction(transaction *tx)
 {
 	if(tx->ip_n==0 || tx->op_n == 0)
 		return false;
-	if(verify_timestamp(tx->timestamp))
-		return false;
+	//if(verify_timestamp(tx->timestamp))
+		//return false;
 	return true;
 }
 bool isCoinbase(transaction *tx)
@@ -95,8 +95,8 @@ void verify_block(struct block_header *b)
 		if(!verify_transaction(&b->tx[i]))
 			cout<<"Invalid Transaction. Zero input/output encountered or timestamp not valid."<<endl;
 	}
-	if(verify_timestamp(b->nTime))
-		cout<<"Invalid timestamp in blockheader"<<endl;
+	//if(verify_timestamp(b->nTime))
+	//	cout<<"Invalid timestamp in blockheader"<<endl;
 }
 void verify_block_pair(struct block_header *b,struct block_header *pb) //this function verify block by compairing privious hash of block with previous hash
 {
