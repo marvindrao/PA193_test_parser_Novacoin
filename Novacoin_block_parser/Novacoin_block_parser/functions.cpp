@@ -260,7 +260,7 @@ bool verify_merkle_root(struct block_header *b)
 	return false;
 		
 }
-
+//header of previous block 
 bool check_preheader(istream& block,struct block_header *b)
 {
 	uint32_t magic= 0;
@@ -314,7 +314,7 @@ bool check_preheader(istream& block,struct block_header *b)
 	free(hash);
 	return true;
 }
-
+//this function read header parameter
 void get_header(istream& block,struct block_header *b)
 {
 	uint32_t nVersion;
@@ -363,12 +363,12 @@ uint64_t varint(istream& block)
 	else if(s1==0xfe)
 	{
 		block.read(reinterpret_cast<char *>(&s3), sizeof(s3));
-		return (uint64_t)s3;
+		return (uint64_t)s2;
 	}
 	else if(s1==0xff)
 	{
 		block.read(reinterpret_cast<char *>(&s4), sizeof(s4));
-		return (uint64_t)s4;
+		return (uint64_t)s2;
 		
 	}
 	return 0;
@@ -406,8 +406,8 @@ void get_transactions(ifstream& block,struct transaction *t)
 	block.seekg(tx_start,block.beg);
 	unsigned char *tx;
 	unsigned char *tx_hash;
-	tx_hash=(unsigned char*)malloc(32*sizeof(unsigned char));
-	tx = (unsigned char*)malloc(tx_size*sizeof(unsigned char));
+	tx_hash=(unsigned char*)malloc(32*sizeof(unsigned char));//allocate memory
+	tx = (unsigned char*)malloc(tx_size*sizeof(unsigned char));//allocate memory
 	block.read(reinterpret_cast<char *>(&tx[0]), tx_size*sizeof(unsigned char));
 	double_SHA256(tx,tx_size,tx_hash);
 	t->version=version;
@@ -422,6 +422,8 @@ void get_transactions(ifstream& block,struct transaction *t)
 	free(tx);
 	free(tx_hash);
 	}
+	
+//input transaction transaction parameter 	
 void get_ip_txn(ifstream& block,struct transaction_in *in)
 {
 	unsigned char txid[32];
@@ -441,6 +443,7 @@ void get_ip_txn(ifstream& block,struct transaction_in *in)
 	for(int i=0;i<32;i++)
 		in->txid[i]=txid[31-i];
 }
+//to read o/p transaction parameter
 void get_op_txn(ifstream& block,struct transaction_out *out)
 {
 	unsigned char *scriptPubKey;
