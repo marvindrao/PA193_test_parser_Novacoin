@@ -95,6 +95,8 @@ void verify_block(struct block_header *b)
 		if(!verify_transaction(&b->tx[i]))
 			cout<<"Invalid Transaction. Zero input/output encountered or timestamp not valid."<<endl;
 	}
+	if(b->n_t == 0)
+		cout<<"Invalid Block since number of transactions 0"<<endl;
 	//if(verify_timestamp(b->nTime))
 	//	cout<<"Invalid timestamp in blockheader"<<endl;
 }
