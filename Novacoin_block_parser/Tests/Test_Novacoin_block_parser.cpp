@@ -39,8 +39,8 @@ bool Test_check_preheader();
 //bool Test_check_header(istream& block,struct block_header *b);
 bool Test_check_header();
 
-bool Test_get_transactions(ifstream& block,struct transaction *t);
-
+//bool Test_get_transactions(ifstream& block,struct transaction *t);
+bool Test_get_transactions();
 /*
 //uint64_t varint(istream& block);
 
@@ -53,11 +53,13 @@ void Test_print_transaction_in(struct transaction_in *in);
 void Test_print_transaction_out(struct transaction_out *out);
 */
 
-int main(int argv, char **argc)
+//int main(int argv, char **argc)
+int main()
 {
 	ifstream block;
 	struct block_header b;
 	struct transaction *t;
+	/*
 	if(argv==2)
 	{
 			block.open(argc[1], ios::binary);
@@ -72,15 +74,24 @@ int main(int argv, char **argc)
 		cout << "file not open" << endl;
 		return -99;
 	}
+	*/
 	//if(!Test_check_preheader(block,&b))
-	if(!Test_check_preheader());
-		//return -99;
+	if(!Test_check_preheader())
+		return -99;
+	else
+		cout<<"Preheader Check Function Test Passed"<<endl;
 	
 	cout<<endl;
 	
 	if(!Test_check_header())
-		;
-		//return -99;
+		return -99;
+	else
+		cout<<"header Check Function Test Passed"<<endl;
+		cout<<endl;
+	if(!Test_get_transactions())
+		return -99;
+	else
+		cout<<"Get Transaction, Print_Hash & Print_Transaction Functions Test Passed"<<endl;
 	/*
 	cout<<endl;
 	b.n_t=varint(block);
@@ -277,7 +288,7 @@ bool Test_check_preheader()
 		// Expected Value of Block Size
 	test_bsize = 192;
 	
-	cout << "Test 2:Testing check_preheader: with Valid Preheader"<< endl;	
+	cout << "Test 2:Testing check_preheader: with InValid Preheader"<< endl;	
 	memcpy(test_hash,test_hash_c,32);
 	/*
 	if(!check_preheader(test_block,&test_b))
@@ -300,13 +311,14 @@ bool Test_check_preheader()
 		cout <<"Test 2: File Size from parser:"<< dec << test1_b.block_size<< endl;
 		if(test_bsize != test1_b.block_size)
 		{
-			cout << "Test 2:check_preheader: Failed : ERROR IN BlockSize"<< endl;	
+			cout << "Test 2:check_preheader: Passed : ERROR IN BlockSize"<< endl;	
 			//return(-99);
-			return false;
+			
 		}
 		else
 		{
-			cout << "Test 2:check_preheader: Passed : BlockSize Calculated Correctly"<< endl;	
+			cout << "Test 2:check_preheader: Failed : BlockSize Calculated Correctly"<< endl;	
+			return false;
 		}
 		blockHashMatch =0;
 		for(int i=0; i<32; ++i)
@@ -317,13 +329,13 @@ bool Test_check_preheader()
 		}
 		if(blockHashMatch != 32)
 		{
-			cout << "Test 2:check_preheader: Failed : ERROR IN BlockHash"<< endl;	
+			cout << "Test 2:check_preheader: Passed : ERROR IN BlockHash"<< endl;	
 			//return(-99);
-			return false;
+			//return false;
 		}
 		else
 		{
-			cout << "Test 2:check_preheader: Passed : BlockHash Calculated Correctly"<< endl;	
+			cout << "Test 2:check_preheader: Failed : BlockHash Calculated Correctly"<< endl;	
 			print_hash(test1_b.b_hash,32);
 		}
 		
@@ -389,6 +401,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test1: nVersion Not Matches"<<endl;
+		//return false;
 	}
 	
 	for(unsigned int i=0; i<32; ++i){
@@ -406,6 +419,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test1: hash Previous Not Matches"<<endl;
+		return false;
 	}
 	
 	
@@ -416,6 +430,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test1: hash merkel Not Matches"<<endl;
+		return false;
 	}
 
 	if(nTimeT == test_b.nTime)
@@ -425,6 +440,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test1: Time Not Matches"<<endl;
+		return false;
 	}
 	
 	if(nBitsT == test_b.nBits)
@@ -434,6 +450,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test1: nBits Not Matches"<<endl;
+		return false;
 	}
 	if(nNonceT == test_b.nNonce)
 	{
@@ -442,6 +459,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test1: nNonce Not Matches"<<endl;
+		return false;
 	}
 	
 	cout<<endl;
@@ -486,6 +504,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test2: nVersion Not Matches"<<endl;
+		return false;
 	}
 	
 	for(unsigned int i=0; i<32; ++i){
@@ -503,6 +522,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test2: hash Previous Not Matches"<<endl;
+		return false;
 	}
 	
 	
@@ -513,6 +533,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test2: hash merkel Not Matches"<<endl;
+		return false;
 	}
 
 	if(nTimeT == test1_b.nTime)
@@ -522,6 +543,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test2: Time Not Matches"<<endl;
+		return false;
 	}
 	
 	if(nBitsT == test1_b.nBits)
@@ -531,6 +553,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test2: nBits Not Matches"<<endl;
+		return false;
 	}
 	if(nNonceT == test1_b.nNonce)
 	{
@@ -539,6 +562,7 @@ bool Test_check_header()
 	}
 	else{
 		cout<<"Test2: nNonce Not Matches"<<endl;
+		return false;
 	}
 	
 	return true;
@@ -548,30 +572,36 @@ bool Test_check_header()
 
 bool Test_get_transactions()
 {
+	uint64_t n_tT; 
 	struct transaction *tT;
 	uint32_t versionT;
-	uint32_t timestampT,lock_timeT;
+	uint32_t timestampT;//,lock_timeT;
+	uint32_t lenT;		
 	uint64_t ip_nT,op_nT;
 	struct transaction_in *inT;
 	struct transaction_out *outT;
 		
-	unsigned char txid[32];
-	unsigned char *scriptSig;
-	uint32_t n,nsequence;
-	uint64_t scriptSigLength;
 	
-	uint64_t nValue;
-	uint64_t scriptPubKeyLength;
-	unsigned char *scriptPubKey;
+	//unsigned char *scriptSigT;
+	uint32_t nT; //,nsequenceT;
+	//uint64_t scriptSigLengthT;
 	
-	int tx_startT = block.tellg();
-	struct block_header test_b, test1_b;
+	//uint64_t nValueT;
+	//uint64_t scriptPubKeyLengthT;
+	//unsigned char *scriptPubKeyT;
+	
+	//int tx_startT = block.tellg();
+	struct block_header test_b; //, test1_b;
 	ifstream test_block, test1_block;
-	bool txnStatus = true;
+	
+	
+	// Checking Transaction No. 6 Input No. 100 of Block
 	
 	cout << "*******************************************"<< endl;	
 	
-	cout << "Test2 : check_header: Started"<< endl;		
+	cout << "Test : Transaction Details: Started"<< endl;		
+	
+	cout << "*******************************************"<< endl;	
 	
 	test_block.open("block2",ios::binary);
 	test_block.seekg(88, ios::beg);
@@ -588,10 +618,101 @@ bool Test_get_transactions()
 	{
 		get_transactions(test_block,&tT[i]);
 	}
+	
+	//unsigned char txidT[32],refTransHashT[32];
+	unsigned char txidT[32]= {0xed,0xa0,0x40,0x89,0x78,0x35,0x60,0x4a,0xce,0xea,0x96,0xe4,0xd5,0x0e,0x5a,0x3d,0x3f,0xc9,0x7f,0x35,0x58,0x47,0xd4,0x33,0xce,0x09,0xb0,0xb9,0x12,0x1a,0xcf,0x5b};
+	
+	unsigned char refTransHashT[32]= {0x13,0x76,0x6f,0x95,0xe4,0xa0,0x5e,0x9a,0x60,0xe9,0x54,0x74,0x19,0xee,0xb4,0x95,0x52,0x4c,0x96,0x65,0xae,0x53,0xb8,0x0b,0x55,0x32,0xc3,0xb4,0xfe,0xfe,0x0d,0x6f};
+	
 	test_b.tx=tT;
+	n_tT = 6;
+	//transaction *tT;
+	versionT=1;
+	timestampT=1477440956 ;
+	//lock_timeT;
+	ip_nT=290;
+	op_nT=1;
+	lenT = 51507;
+	//*inT;
+	//*outT;
+	
+	nT = 1;
+	float outputValT = 50;
+	
+	cout<<"Number of Transactions : "<<test_b.n_t<<endl; // Number of Transactions
+	//print_transaction(&test_b->tx[5]);
+	
+	//cout<<"Version "<<(test_b.tx[5]).version<<endl;
+	struct transaction *t;
+	t = &(test_b.tx[5]);
+	cout<<"Transaction Version : "<<t->version<<endl;
+	time_t tx_time=t->timestamp;
+	if(tx_time == timestampT)
+	{
+		cout<<"Transaction Time: Matches "<<ctime(&tx_time);
+	}
+	else
+	{
+		cout<<"Transaction Time: NOt Matches "<<endl;
+		return false;
+	}
+	cout<<"Transaction Time "<<ctime(&tx_time);
+	if(t->ip_n == ip_nT)
+	{
+		cout<<"Number of inputs: Matches "<<dec<<t->ip_n<<endl;
+	}
+	else
+	{
+		cout<<"Number of inputs: Not Matches"<<endl;//dec<<t->ip_n<<endl;
+		return false;
+	}
+	if(t->op_n == op_nT)
+	{
+		cout<<"Number of outputs: Matches "<<dec<<t->op_n<<endl;
+	}
+	else
+	{
+		cout<<"Number of outputs: Not Matches"<<endl; //<<dec<<t->ip_n<<endl;
+		return false;
+	}
+	
+	//tx_time=t->lock_time;
+	///cout<<"Transaction Lock Time/Height "<<dec<<t->lock_time<<endl;
+	
+	if(t->len == lenT)
+	{
+		cout<<"Transaction Length: Matches "<<dec<<t->len<<endl;
+	}
+	else
+	{
+		cout<<"Transaction Length: Not Matches"<<endl; //<<dec<<t->ip_n<<endl;
+		return false;
+	}
+	//cout<<"Transaction Length "<<t->len<<endl;
+	
+	//int refTransOutIDT;
+	//bool txnStatus = true;
+	// Compare Here Transaction Hash
+	cout<<"Transaction Hash :";
+	print_hash(t->tid,32);
+	cout<<endl;
+	// Compare Here Input Hash
+	cout<<"Input: "<<dec<<99+1<<endl;
+	print_transaction_in(&t->tx_input[99]);
+	cout<<"Output: "<<dec<<0+1<<endl;
+	print_transaction_out(&t->tx_output[0]);
 	
 	
+	/*
+	*scriptSigT;
+	nT,nsequenceT;
+	scriptSigLengthT;
 	
+	nValueT;
+	scriptPubKeyLengthT;
+	*scriptPubKeyT;
+	*/
+	/*
 	block.read(reinterpret_cast<char *>(&version), sizeof(version));
 	block.read(reinterpret_cast<char *>(&timestamp), sizeof(timestamp));
 	ip_n=varint(block);
@@ -607,6 +728,7 @@ bool Test_get_transactions()
 	{
 		get_op_txn(block,&out[i]);
 	}
+	
 	
     block.read(reinterpret_cast<char *>(&lock_time), sizeof(lock_time));
 	int tx_end =block.tellg();
@@ -631,6 +753,8 @@ bool Test_get_transactions()
 	t->tx_output=out;
 	for(unsigned int i=0; i<32; ++i)
 		t->tid[i] = tx_hash2[31-i];
+	*/
+	return true;
 }
 
 /*
