@@ -363,12 +363,12 @@ uint64_t varint(istream& block)
 	else if(s1==0xfe)
 	{
 		block.read(reinterpret_cast<char *>(&s3), sizeof(s3));
-		return (uint64_t)s2;
+		return (uint64_t)s3;
 	}
 	else if(s1==0xff)
 	{
 		block.read(reinterpret_cast<char *>(&s4), sizeof(s4));
-		return (uint64_t)s2;
+		return (uint64_t)s4;
 		
 	}
 	return 0;
