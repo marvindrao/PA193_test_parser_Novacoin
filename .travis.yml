@@ -3,6 +3,6 @@ language: cpp
 compiler: g++
 
 before_script: 
- cd Novacoin_block_parser/Novacoin_block_parser
+ cd Novacoin_block_parser/Tests
 
 script: "bash build.sh"
