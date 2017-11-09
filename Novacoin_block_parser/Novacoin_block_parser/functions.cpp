@@ -52,6 +52,7 @@ void destroy_block(struct block_header *b)
 	}
 	free(b->tx);
 }
+//this function verify block by compairing privious hash of block with previous hash
 void verify_block(struct block_header *b,struct block_header *pb)
 {
 	if(!verify_merkle_root(b))
@@ -66,6 +67,7 @@ void verify_block(struct block_header *b,struct block_header *pb)
 		cout<<"Previous block hash invalid"<<endl;
 	
 }
+//this function use to read block
 void read_block(ifstream& block,struct block_header *b)
 {
 	struct transaction *t=NULL;
@@ -80,7 +82,7 @@ void read_block(ifstream& block,struct block_header *b)
 	}
 	b->tx=t;
 	print_block(b);
-}
+}//this function use to check header of block
 bool check_header(istream& block,struct block_header *b)
 {
 	uint32_t nVersion;
@@ -119,11 +121,13 @@ void rev_hash(unsigned char* hash, int len)
 	memcpy(hash,tmp,len);
 	free(tmp);
 }
+//print hash of block
 void print_hash(unsigned char* hash, int len)
 {
 	for(int i=0; i<len; ++i)
 		cout <<setw(2)<<hex<<setfill('0')<<(int)hash[i];
 }
+//print all component of block like hash number of transaction....etc
 void print_block(struct block_header *b)
 {
 	cout<<"nVersion "<<b->nVersion<<endl;
@@ -149,6 +153,7 @@ void print_block(struct block_header *b)
 	}
 
 }
+//this function print Number of input and output Transaction in a block
 void print_transaction(struct transaction *t)
 {
 	cout<<"Version "<<t->version<<endl;
@@ -173,6 +178,7 @@ void print_transaction(struct transaction *t)
 		print_transaction_out(&t->tx_output[i]);
 	}*/
 }
+//
 void print_transaction_in(struct transaction_in *in)
 {
 	cout<<"Referred TxId :";
@@ -254,6 +260,7 @@ bool verify_merkle_root(struct block_header *b)
 	return false;
 		
 }
+
 bool check_preheader(istream& block,struct block_header *b)
 {
 	uint32_t magic= 0;
