@@ -9,11 +9,20 @@ We will keep on adding features incrementally and testing it.
 
 Arvind:
 Stage1: detect magic number and file size and say if block is valid or not.[done]
-Stage2: Read all fields from Block[done] and xml output of parsed fields
-Stage3: Merkle Root Verification
-Stage4:	Tx Verification
+
+
+Stage2: Read all fields from Block[done] and output of parsed fields[done]
+
+
+Stage3: Merkle Root Verification[done]
+
+
+Stage4:	Prev Block Hash Validation[done]
+
+
 
 Kuldeep and Surendra:
+
 Unit testing of each parser function
 identifying and patching vulnerabilities
 

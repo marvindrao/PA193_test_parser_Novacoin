@@ -14,6 +14,35 @@
 #include "functions.h"
 #include <iomanip>
 
+bool verify_timestamp(uint32_t timestamp)
+{
+	const uint32_t tm = 60*60;
+	uint32_t currentTime = static_cast<uint32_t>(time(NULL));
+    return (timestamp-tm)<currentTime;
+}
+
+
+bool verify_transaction(transaction *tx)
+{
+	if(tx->ip_n==0 || tx->op_n == 0)
+		return false;
+	if(verify_timestamp(tx->timestamp))
+		return false;
+	return true;
+}
+bool isCoinbase(transaction *tx)
+{
+	if(tx->ip_n!=1)
+	{
+		return false;
+	}
+	unsigned char zero_hash[32];
+	memset(zero_hash,0,32);
+	if(memcmp(tx->tx_input->txid,zero_hash,32)!=0)
+		return false;
+	return true;
+}
+	
 
 void destroy_transaction_out(struct transaction_out *tout)
 {
@@ -52,7 +81,24 @@ void destroy_block(struct block_header *b)
 	}
 	free(b->tx);
 }
-void verify_block(struct block_header *b,struct block_header *pb)
+void verify_block(struct block_header *b)
+{
+	if(!isCoinbase(&b->tx[0]))
+		cout<<"First transaction of block is not coinbase"<<endl;
+	for(uint64_t i=1;i<b->n_t;i++)
+	{
+		if(isCoinbase(&b->tx[i]))
+			cout<<"Invalid Transaction. Transaction other than first coinbase"<<endl;
+	}
+	for(uint64_t i=0;i<b->n_t;i++)
+	{
+		if(!verify_transaction(&b->tx[i]))
+			cout<<"Invalid Transaction. Zero input/output encountered or timestamp not valid."<<endl;
+	}
+	if(verify_timestamp(b->nTime))
+		cout<<"Invalid timestamp in blockheader"<<endl;
+}
+void verify_block_pair(struct block_header *b,struct block_header *pb)
 {
 	if(!verify_merkle_root(b))
 	{
@@ -64,6 +110,9 @@ void verify_block(struct block_header *b,struct block_header *pb)
 	}
 	if(memcmp(b->hashPrevBlock,pb->b_hash,32)!=0)
 		cout<<"Previous block hash invalid"<<endl;
+	verify_block(b);
+	verify_block(pb);
+	
 	
 }
 void read_block(ifstream& block,struct block_header *b)

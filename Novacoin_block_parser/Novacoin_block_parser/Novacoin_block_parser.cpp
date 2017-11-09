@@ -44,7 +44,7 @@ int main(int argv, char **argc)
 	}
 	read_block(block,&b);
 	read_block(prevblock,&pb);
-	verify_block(&b,&pb);	
+	verify_block_pair(&b,&pb);	
 	destroy_block(&b);
 	destroy_block(&pb);
 
